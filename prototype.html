@@ -1,0 +1,228 @@
+  <!DOCTYPE html>
+<html>
+<head>
+<title>Application Portal</title>
+<link rel="stylesheet" type="text/css" href="~/../common.css">
+<script type="text/javascript" src="~/../js/jquery-1.11.3.min.js"></script>
+</head>
+<body>
+<div id="page" style="">
+	<div id="content">
+		<div id="list-view" class="views">
+			<ul id="list-items" class="items">
+			</ul>	
+		</div>
+	</div>
+	<div id="leftedge"></div>
+	<div id="sidebar" > 
+		<p>View:</p>
+		<ul class="tabs">
+			<li><a id="list-tab" href="#list-view">List</a></li>
+			<li><a id="grid-tab" href="#grid-view">Grid</a></li>
+			<li><a id="metro-tab" href="#metro-view">Metro</a></li>
+		</ul> 
+	</div>
+</div>
+<script type="text/javascript">
+$(document).ready(function(){
+	var NUM_ITEMS = 150,
+		viewId = $('.views').attr('id'),
+		timer,	
+		keys = {	
+			alt: false,
+			l: false,
+			g: false,
+			m: false,
+			noAltMenu: false
+		};
+
+	// Generate the items
+   	for ( var i = 1; i <= NUM_ITEMS; i++ ) {
+		$('.views ul').append( '<li class="item-' + i + '">Item ' + i + '</li>' );
+	}
+ 	
+	 //Initiate CSS to list positions
+	createListCss(NUM_ITEMS);
+
+	// Record key states in keydown
+	$(document).keydown(function(event) {
+	    if (event.keyCode === 18) {
+	    	keys['alt'] = true;
+	    	keys['noAltMenu'] = false;			//Set to show Menu
+	    } else if (event.keyCode === 76) {
+	    	keys['l'] = true;
+	    } else if (event.keyCode === 71) {
+	    	keys['g'] = true;
+	    } else if (event.keyCode === 77) {
+	    	keys['m'] = true;
+	    }
+	});
+
+	// Keyup trigger actions
+	$(document).keyup(function(event) { 
+        // 4.a Press Alt; 5.d Alt -> Alt
+      	if (!$('#sidebar').is(":visible") && keys['alt'] && !keys['l'] && !keys['g'] && !keys['m'] && !keys['noAltMenu']) { 
+    		$('#sidebar').show(250, 'swing');
+    		$('#sidebar').addClass('alt-show');
+    		keys['alt'] = false;
+    		return;
+    	} else if ($('#sidebar').hasClass('alt-show') && keys['alt']) {
+    		$('#sidebar').hide(250, 'swing');
+    		$('#sidebar').removeClass('alt-show');
+    		keys['alt'] = false;
+    		return;
+    	}
+		
+		// Alt -> L, G, M
+		if ($('#sidebar').hasClass('alt-show')) {
+			getViewId();
+			getView(viewId);		
+    		$('#sidebar').hide(250, 'swing');
+    		$('#sidebar').removeClass('alt-show');
+    		keys['alt'] = false;
+    		return;
+		}
+		
+		// 8 Alt+L; Alt+G; Alt+M
+ 		if (!$('#sidebar').is(":visible") && event.altKey) {
+ 			getViewId();
+    		getView(viewId);
+    		keys['noAltMenu'] = true;	//Set to not show alt menu
+    		return;
+    	}
+		
+		// Reset l, g, m key state
+		keys['l'] = false;
+		keys['g'] = false;
+		keys['m'] = false;
+    }); 
+
+	// Mouse show.
+	$("#leftedge").mouseenter(function() {
+	    var that = this;
+	    timer = setTimeout(function(){
+	        $('#leftedge').removeClass('hovered');
+	        $(that).addClass('hovered');
+        	$('#sidebar').show(250, 'swing');
+	    }, 1000);
+	}).mouseleave(function() {
+	    clearTimeout(timer);
+	});
+
+	// Mouse show after
+    $('#sidebar').mouseleave(function() {     	
+    	if (!$('#sidebar').hasClass('alt-show')) {
+    		$('#sidebar').hide(250, 'swing');
+    	}
+    })
+    	
+	// Mouse -> Click links
+	$('.tabs li a').click(function(){		
+		var tabSlected = $(this).attr('id');
+		$(this).addClass('selected-tab');
+		
+		if (tabSlected === 'list-tab') {
+			$('.views').attr('id', 'list-view');			
+		} else if (tabSlected === 'grid-tab') {
+			$('.views').attr('id', 'grid-view');
+		} else if (tabSlected === 'metro-tab') {
+			$('.views').attr('id', 'metro-view');
+		} else {
+			return false;
+		}
+		
+		viewId = $('.views').attr('id');
+		getView(viewId); 
+		return false;
+	});
+    
+    /* FUNCTION */
+    function getView(viewId) {
+		if (viewId === 'list-view') {
+			$('.views ul').attr('id', 'list-items');
+			createListCss(NUM_ITEMS);
+		} else if (viewId === 'grid-view') {
+			$('.views ul').attr('id', 'grid-items');
+			createGridCss(NUM_ITEMS);
+		} else if (viewId === 'metro-view') {
+			$('.views ul').attr('id', 'metro-items');
+			createMetroCss(NUM_ITEMS);
+		} else {
+			return false;
+		}
+	}
+    
+    // Generate List Items CSS Positions
+    function createListCss(numItems) {
+	   	for ( var i = 1; i <= numItems; i++ ) {
+			var itemSelector = "#list-items " + ".item-" + i.toString();
+			var itemTop = (i-1) * 40;
+			$(itemSelector).css({"top": itemTop, "left": "0px"});
+	   	}
+    }
+
+    // Generate Grid Items CSS Positions
+    function createGridCss(numItems) {
+    	var itemSpace = 80;	
+    	var columns = Math.floor($(window).width() / itemSpace);
+    	var rows = Math.floor(numItems / columns) + 1;
+
+    	for (var j = 1; j <= rows; j++) {
+    		var itemTop = (j-1) * itemSpace;
+		   	for (var i = 1; i <= columns; i++) {
+		   		var id = (j - 1) * columns + i;
+		   		if (id > numItems) {
+		   			return;
+		   		}
+		   		
+				var itemSelector = "#grid-items " + ".item-" + id.toString();
+				var itemLeft = (i -1) * itemSpace;
+
+				$(itemSelector).css({"top": itemTop, "left": itemLeft});
+		   	}
+    	}
+    }
+    
+    // Generate Metro Items CSS Positions
+    function createMetroCss(numItems) {
+    	var itemSpace = 80;	
+    	var rows = Math.floor($(window).height() / itemSpace);
+    	var columns = Math.floor(numItems / rows + 1);
+    	
+    	for (var j = 1; j <= columns; j++) {
+    		var itemLeft = (j-1) * itemSpace;
+		   	for (var i = 1; i <= rows; i++) {
+		   		var id = (j - 1) * rows + i;
+		   		if (id > numItems) {
+		   			return;
+		   		}
+		   		
+				var itemSelector = "#metro-items " + ".item-" + id.toString();
+				var itemTop = (i -1) * itemSpace;
+
+				$(itemSelector).css({"top": itemTop, "left": itemLeft});
+		   	}
+    	}
+    }
+    
+    function getViewId() {
+    	if (keys['l']) {
+			$('.views').attr('id', 'list-view');
+			viewId = $('.views').attr('id');
+			keys['l'] = false;
+    	} else if (keys['g']) {
+			$('.views').attr('id', 'grid-view');
+			viewId = $('.views').attr('id');
+			keys['g'] = false;
+    	} else if (keys['m']) {
+			$('.views').attr('id', 'metro-view');
+			viewId = $('.views').attr('id');
+			keys['m'] = false;
+    	} else {
+			return false;
+		}
+    }
+});
+</script>
+</body>
+</html>
